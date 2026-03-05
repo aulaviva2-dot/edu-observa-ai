@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      observations: {
+        Row: {
+          ai_analysis: Json | null
+          created_at: string
+          grade: string
+          group_name: string
+          id: string
+          observation_date: string
+          school: string
+          status: string
+          subject: string
+          teacher: string
+          updated_at: string
+          user_id: string
+          vistazo_1: string | null
+          vistazo_10: string | null
+          vistazo_2: string | null
+          vistazo_3: string | null
+          vistazo_4: string | null
+          vistazo_5: string | null
+          vistazo_6: string | null
+          vistazo_7: string | null
+          vistazo_8: string | null
+          vistazo_9: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          created_at?: string
+          grade: string
+          group_name: string
+          id?: string
+          observation_date?: string
+          school: string
+          status?: string
+          subject: string
+          teacher: string
+          updated_at?: string
+          user_id: string
+          vistazo_1?: string | null
+          vistazo_10?: string | null
+          vistazo_2?: string | null
+          vistazo_3?: string | null
+          vistazo_4?: string | null
+          vistazo_5?: string | null
+          vistazo_6?: string | null
+          vistazo_7?: string | null
+          vistazo_8?: string | null
+          vistazo_9?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          created_at?: string
+          grade?: string
+          group_name?: string
+          id?: string
+          observation_date?: string
+          school?: string
+          status?: string
+          subject?: string
+          teacher?: string
+          updated_at?: string
+          user_id?: string
+          vistazo_1?: string | null
+          vistazo_10?: string | null
+          vistazo_2?: string | null
+          vistazo_3?: string | null
+          vistazo_4?: string | null
+          vistazo_5?: string | null
+          vistazo_6?: string | null
+          vistazo_7?: string | null
+          vistazo_8?: string | null
+          vistazo_9?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
