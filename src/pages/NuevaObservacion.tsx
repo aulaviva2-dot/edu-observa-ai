@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function NuevaObservacion() {
-
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const [info, setInfo] = useState({
@@ -28,37 +30,87 @@ export default function NuevaObservacion() {
   };
 
   const enviarObservacion = async () => {
+    if (!info.school || !info.teacher) {
+      toast.error("Por favor completa al menos la escuela y el docente.");
+      return;
+    }
 
     setLoading(true);
+    const validVistazos = vistazos.filter((v) => v.trim());
+
+    if (validVistazos.length < 3) {
+      toast.error("Se necesitan al menos 3 vistazos para analizar.");
+      setLoading(false);
+      return;
+    }
 
     try {
+      // 1. Guardar la observación en la base de datos
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error("No hay sesión activa");
 
-      const response = await supabase.functions.invoke("analyze-observation", {
-        body: {
-          vistazos: vistazos.filter((v) => v.trim()),
+      const { data: newObs, error: insertError } = await supabase
+        .from("observations")
+        .insert({
+          user_id: userData.user.id,
           school: info.school,
           teacher: info.teacher,
           grade: info.grade,
           group_name: info.group_name,
-          project_name: info.project_name,
-          problematica: info.problematica,
-          producto_final: info.producto_final,
-          observation_date: info.observation_date
+          subject: info.project_name, // Map project_name to subject for compatibility or add subject field
+          observation_date: info.observation_date,
+          problematica: info.problematica, // Added problematica
+          producto_final: info.producto_final, // Added producto_final
+          vistazo_1: vistazos[0],
+          vistazo_2: vistazos[1],
+          vistazo_3: vistazos[2],
+          vistazo_4: vistazos[3],
+          vistazo_5: vistazos[4],
+          vistazo_6: vistazos[5],
+          vistazo_7: vistazos[6],
+          vistazo_8: vistazos[7],
+          vistazo_9: vistazos[8],
+          vistazo_10: vistazos[9], // Corrected index from 10 to 9
+          status: "draft"
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // 2. Llamar a la función de análisis
+      const response = await supabase.functions.invoke("analyze-observation", {
+        body: {
+          vistazos: validVistazos,
+          school: info.school,
+          teacher: info.teacher,
+          grade: info.grade,
+          subject: info.project_name,
         },
       });
 
-      console.log(response);
+      if (response.error) {
+        console.error("Error en análisis:", response.error);
+        toast.warning("Observación guardada, pero el análisis falló. Puedes intentarlo de nuevo desde el panel.");
+        navigate("/dashboard");
+        return;
+      }
 
-      alert("Observación enviada correctamente");
+      // 3. Actualizar con el análisis
+      await supabase
+        .from("observations")
+        .update({ ai_analysis: response.data, status: "analyzed" })
+        .eq("id", newObs.id);
 
-    } catch (error) {
+      toast.success("¡Observación analizada correctamente!");
+      navigate(`/observacion/${newObs.id}`);
 
+    } catch (error: any) {
       console.error(error);
-      alert("Error al enviar observación");
-
+      toast.error("Error: " + (error.message || "No se pudo procesar la observación"));
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
