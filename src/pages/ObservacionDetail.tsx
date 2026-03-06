@@ -77,7 +77,7 @@ const ObservacionDetail = () => {
           teacher: obs.teacher,
           school: obs.school,
           grade: obs.grade,
-          subject: obs.subject,
+          project_name: obs.project_name,
         },
       });
 
@@ -112,7 +112,7 @@ const ObservacionDetail = () => {
     doc.text(`Escuela: ${obs.school}`, 14, 35);
     doc.text(`Docente: ${obs.teacher}`, 14, 42);
     doc.text(`Fecha: ${format(new Date(obs.observation_date), "d 'de' MMMM yyyy", { locale: es })}`, 14, 49);
-    doc.text(`Grado: ${obs.grade} ${obs.group_name || ""} · Asignatura: ${obs.subject}`, 14, 56);
+    doc.text(`Grado: ${obs.grade} ${obs.group_name || ""} · Proyecto: ${obs.project_name}`, 14, 56);
 
     let currentY = 70;
 
@@ -243,7 +243,7 @@ const ObservacionDetail = () => {
           <div className="flex-1">
             <h1 className="text-lg font-display font-bold text-foreground truncate">{obs.school}</h1>
             <p className="text-xs md:text-sm text-muted-foreground truncate">
-              {obs.teacher} · {obs.grade} {obs.group_name} · {obs.subject}
+              {obs.teacher} · {obs.grade} {obs.group_name} · {obs.project_name}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -255,8 +255,8 @@ const ObservacionDetail = () => {
             )}
             <span
               className={`text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-medium ${obs.status === "analyzed"
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-secondary text-secondary-foreground"
+                ? "bg-accent text-accent-foreground"
+                : "bg-secondary text-secondary-foreground"
                 }`}
             >
               {obs.status === "analyzed" ? "Analizada" : "Borrador"}
@@ -325,8 +325,8 @@ const ObservacionDetail = () => {
                 </h2>
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${analysis.implementation_level.status === 'Consolidado' ? 'bg-emerald-500 text-white' :
-                      analysis.implementation_level.status === 'En desarrollo' ? 'bg-amber-500 text-white' :
-                        'bg-slate-500 text-white'
+                    analysis.implementation_level.status === 'En desarrollo' ? 'bg-amber-500 text-white' :
+                      'bg-slate-500 text-white'
                     }`}>
                     {analysis.implementation_level.status}
                   </span>

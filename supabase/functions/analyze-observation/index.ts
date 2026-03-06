@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { vistazos, teacher, school, grade, subject } = await req.json();
+    const { vistazos, teacher, school, grade, project_name } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -55,7 +55,7 @@ IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
     const userPrompt = `Escuela: ${school}
 Docente: ${teacher}
 Grado: ${grade}
-Asignatura: ${subject}
+Nombre del Proyecto: ${project_name}
 
 Registros de observación:
 ${vistazosList}

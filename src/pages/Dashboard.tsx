@@ -14,7 +14,7 @@ interface Observation {
   teacher: string;
   grade: string;
   group_name: string;
-  subject: string;
+  project_name: string;
   observation_date: string;
   status: string;
   created_at: string;
@@ -39,7 +39,7 @@ const Dashboard = () => {
 
       const { data: obs } = await supabase
         .from("observations")
-        .select("id, school, teacher, grade, group_name, subject, observation_date, status, created_at")
+        .select("id, school, teacher, grade, group_name, project_name, observation_date, status, created_at")
         .order("created_at", { ascending: false });
 
       if (obs) setObservations(obs);
@@ -118,11 +118,10 @@ const Dashboard = () => {
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-medium text-foreground text-sm line-clamp-1">{obs.school}</h3>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      obs.status === "analyzed"
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${obs.status === "analyzed"
                         ? "bg-accent text-accent-foreground"
                         : "bg-secondary text-secondary-foreground"
-                    }`}
+                      }`}
                   >
                     {obs.status === "analyzed" ? "Analizada" : "Borrador"}
                   </span>
@@ -131,7 +130,7 @@ const Dashboard = () => {
                   Docente: {obs.teacher}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  {obs.grade} · {obs.group_name} · {obs.subject}
+                  {obs.grade} · {obs.group_name} · {obs.project_name}
                 </p>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3">
                   <Calendar className="w-3 h-3" />

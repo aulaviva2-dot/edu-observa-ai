@@ -58,7 +58,7 @@ export default function NuevaObservacion() {
           teacher: info.teacher,
           grade: info.grade,
           group_name: info.group_name,
-          subject: info.project_name, // Map project_name to subject for compatibility or add subject field
+          project_name: info.project_name, // Replaced subject with project_name
           observation_date: info.observation_date,
           problematica: info.problematica, // Added problematica
           producto_final: info.producto_final, // Added producto_final
@@ -86,7 +86,7 @@ export default function NuevaObservacion() {
           school: info.school,
           teacher: info.teacher,
           grade: info.grade,
-          subject: info.project_name,
+          project_name: info.project_name,
         },
       });
 
