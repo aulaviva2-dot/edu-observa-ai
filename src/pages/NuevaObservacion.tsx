@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function NuevaObservacion() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -46,13 +48,12 @@ export default function NuevaObservacion() {
 
     try {
       // 1. Guardar la observación en la base de datos
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("No hay sesión activa");
+      if (!user) throw new Error("No hay sesión activa");
 
       const { data: newObs, error: insertError } = await supabase
         .from("observations")
         .insert({
-          user_id: userData.user.id,
+          user_id: user.id,
           school: info.school,
           teacher: info.teacher,
           grade: info.grade,
