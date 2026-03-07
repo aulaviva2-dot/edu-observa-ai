@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Send, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 export default function NuevaObservacion() {
@@ -47,39 +49,40 @@ export default function NuevaObservacion() {
     }
 
     try {
-      // 1. Guardar la observación en la base de datos
       if (!user) throw new Error("No hay sesión activa");
+
+      const insertData: any = {
+        user_id: user.id,
+        school: info.school,
+        teacher: info.teacher,
+        grade: info.grade,
+        group_name: info.group_name,
+        subject: info.project_name,
+        project_name: info.project_name,
+        problematica: info.problematica,
+        producto_final: info.producto_final,
+        observation_date: info.observation_date,
+        vistazo_1: vistazos[0] || null,
+        vistazo_2: vistazos[1] || null,
+        vistazo_3: vistazos[2] || null,
+        vistazo_4: vistazos[3] || null,
+        vistazo_5: vistazos[4] || null,
+        vistazo_6: vistazos[5] || null,
+        vistazo_7: vistazos[6] || null,
+        vistazo_8: vistazos[7] || null,
+        vistazo_9: vistazos[8] || null,
+        vistazo_10: vistazos[9] || null,
+        status: "draft",
+      };
 
       const { data: newObs, error: insertError } = await supabase
         .from("observations")
-        .insert({
-          user_id: user.id,
-          school: info.school,
-          teacher: info.teacher,
-          grade: info.grade,
-          group_name: info.group_name,
-          project_name: info.project_name, // Replaced subject with project_name
-          observation_date: info.observation_date,
-          problematica: info.problematica, // Added problematica
-          producto_final: info.producto_final, // Added producto_final
-          vistazo_1: vistazos[0],
-          vistazo_2: vistazos[1],
-          vistazo_3: vistazos[2],
-          vistazo_4: vistazos[3],
-          vistazo_5: vistazos[4],
-          vistazo_6: vistazos[5],
-          vistazo_7: vistazos[6],
-          vistazo_8: vistazos[7],
-          vistazo_9: vistazos[8],
-          vistazo_10: vistazos[9], // Corrected index from 10 to 9
-          status: "draft"
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (insertError) throw insertError;
 
-      // 2. Llamar a la función de análisis
       const response = await supabase.functions.invoke("analyze-observation", {
         body: {
           vistazos: validVistazos,
@@ -87,17 +90,18 @@ export default function NuevaObservacion() {
           teacher: info.teacher,
           grade: info.grade,
           project_name: info.project_name,
+          problematica: info.problematica,
+          producto_final: info.producto_final,
         },
       });
 
       if (response.error) {
         console.error("Error en análisis:", response.error);
-        toast.warning("Observación guardada, pero el análisis falló. Puedes intentarlo de nuevo desde el panel.");
+        toast.warning("Observación guardada, pero el análisis falló. Puedes intentarlo desde el detalle.");
         navigate("/dashboard");
         return;
       }
 
-      // 3. Actualizar con el análisis
       await supabase
         .from("observations")
         .update({ ai_analysis: response.data, status: "analyzed" })
@@ -105,7 +109,6 @@ export default function NuevaObservacion() {
 
       toast.success("¡Observación analizada correctamente!");
       navigate(`/observacion/${newObs.id}`);
-
     } catch (error: any) {
       console.error(error);
       toast.error("Error: " + (error.message || "No se pudo procesar la observación"));
@@ -115,136 +118,95 @@ export default function NuevaObservacion() {
   };
 
   return (
-
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-
-      <h1 className="text-2xl font-bold">
-        Nueva Observación de Aula
-      </h1>
-
-      <div className="grid grid-cols-2 gap-4">
-
-        <div>
-          <Label>Escuela</Label>
-          <Input
-            value={info.school}
-            onChange={(e) =>
-              setInfo({ ...info, school: e.target.value })
-            }
-          />
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card sticky top-0 z-10 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h1 className="text-lg font-display font-bold text-foreground">Nueva Observación de Aula</h1>
         </div>
+      </header>
 
-        <div>
-          <Label>Docente</Label>
-          <Input
-            value={info.teacher}
-            onChange={(e) =>
-              setInfo({ ...info, teacher: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <Label>Grado</Label>
-          <Input
-            value={info.grade}
-            onChange={(e) =>
-              setInfo({ ...info, grade: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <Label>Grupo</Label>
-          <Input
-            value={info.group_name}
-            onChange={(e) =>
-              setInfo({ ...info, group_name: e.target.value })
-            }
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label>Nombre del Proyecto</Label>
-          <Input
-            placeholder="Ej. Cuidemos el agua en nuestra comunidad"
-            value={info.project_name}
-            onChange={(e) =>
-              setInfo({ ...info, project_name: e.target.value })
-            }
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label>Problemática que atiende</Label>
-          <Input
-            placeholder="Ej. Uso excesivo de agua en la escuela"
-            value={info.problematica}
-            onChange={(e) =>
-              setInfo({ ...info, problematica: e.target.value })
-            }
-          />
-        </div>
-
-        <div className="col-span-2">
-          <Label>Producto final del proyecto</Label>
-          <Input
-            placeholder="Ej. Campaña escolar de cuidado del agua"
-            value={info.producto_final}
-            onChange={(e) =>
-              setInfo({ ...info, producto_final: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <Label>Fecha</Label>
-          <Input
-            type="date"
-            value={info.observation_date}
-            onChange={(e) =>
-              setInfo({ ...info, observation_date: e.target.value })
-            }
-          />
-        </div>
-
-      </div>
-
-      <div className="space-y-4">
-
-        <h2 className="text-xl font-semibold">
-          Registrar los 10 vistazos
-        </h2>
-
-        {vistazos.map((v, i) => (
-
-          <div key={i}>
-
-            <Label>Vistazo {i + 1}</Label>
-
-            <Input
-              placeholder="Describe brevemente lo observado en 5-10 segundos"
-              value={v}
-              onChange={(e) =>
-                handleVistazoChange(i, e.target.value)
-              }
-            />
-
+      <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+        <Card className="p-6">
+          <h2 className="text-lg font-display font-bold text-foreground mb-4">Datos generales</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Escuela *</Label>
+              <Input value={info.school} onChange={(e) => setInfo({ ...info, school: e.target.value })} placeholder="Nombre de la escuela" />
+            </div>
+            <div>
+              <Label>Docente *</Label>
+              <Input value={info.teacher} onChange={(e) => setInfo({ ...info, teacher: e.target.value })} placeholder="Nombre del docente" />
+            </div>
+            <div>
+              <Label>Grado</Label>
+              <Input value={info.grade} onChange={(e) => setInfo({ ...info, grade: e.target.value })} placeholder="Ej. 3°" />
+            </div>
+            <div>
+              <Label>Grupo</Label>
+              <Input value={info.group_name} onChange={(e) => setInfo({ ...info, group_name: e.target.value })} placeholder="Ej. A" />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Nombre del Proyecto</Label>
+              <Input value={info.project_name} onChange={(e) => setInfo({ ...info, project_name: e.target.value })} placeholder="Ej. Cuidemos el agua en nuestra comunidad" />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Problemática que atiende</Label>
+              <Input value={info.problematica} onChange={(e) => setInfo({ ...info, problematica: e.target.value })} placeholder="Ej. Uso excesivo de agua en la escuela" />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Producto final del proyecto</Label>
+              <Input value={info.producto_final} onChange={(e) => setInfo({ ...info, producto_final: e.target.value })} placeholder="Ej. Campaña escolar de cuidado del agua" />
+            </div>
+            <div>
+              <Label>Fecha</Label>
+              <Input type="date" value={info.observation_date} onChange={(e) => setInfo({ ...info, observation_date: e.target.value })} />
+            </div>
           </div>
+        </Card>
 
-        ))}
+        <Card className="p-6">
+          <h2 className="text-lg font-display font-bold text-foreground mb-4 flex items-center gap-2">
+            <Eye className="w-5 h-5 text-primary" />
+            Registrar los 10 vistazos
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Registra brevemente lo que observas en cada vistazo de 5-10 segundos durante la clase.
+          </p>
+          <div className="space-y-3">
+            {vistazos.map((v, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                <span className="text-xs font-medium text-primary bg-accent rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-2">
+                  {i + 1}
+                </span>
+                <div className="flex-1">
+                  <Input
+                    placeholder={`Vistazo ${i + 1}: Describe brevemente lo observado`}
+                    value={v}
+                    onChange={(e) => handleVistazoChange(i, e.target.value)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-      </div>
-
-      <Button
-        onClick={enviarObservacion}
-        disabled={loading}
-        className="w-full"
-      >
-        {loading ? "Analizando..." : "Enviar observación"}
-      </Button>
-
+        <Button onClick={enviarObservacion} disabled={loading} className="w-full py-6 text-base shadow-lg">
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Analizando observación...
+            </>
+          ) : (
+            <>
+              <Send className="w-5 h-5 mr-2" />
+              Enviar y Analizar Observación
+            </>
+          )}
+        </Button>
+      </main>
     </div>
-
   );
 }

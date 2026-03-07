@@ -3,7 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Send, Loader2, Eye, CheckCircle, AlertCircle, MinusCircle, BookOpen, TrendingUp, Target, Lightbulb, Download, ClipboardCheck, LayoutDashboard } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Send, Loader2, Eye, CheckCircle, AlertCircle, MinusCircle, BookOpen, TrendingUp, Target, Lightbulb, Download, ClipboardCheck, LayoutDashboard, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -35,6 +46,7 @@ const ObservacionDetail = () => {
   const [obs, setObs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchObs = async () => {
@@ -54,6 +66,19 @@ const ObservacionDetail = () => {
     };
     fetchObs();
   }, [id, navigate]);
+
+  const handleDelete = async () => {
+    if (!obs) return;
+    setDeleting(true);
+    const { error } = await supabase.from("observations").delete().eq("id", obs.id);
+    if (error) {
+      toast.error("No se pudo eliminar la observación.");
+      setDeleting(false);
+      return;
+    }
+    toast.success("Observación eliminada correctamente.");
+    navigate("/dashboard");
+  };
 
   const handleAnalyze = async () => {
     if (!obs) return;
@@ -77,7 +102,9 @@ const ObservacionDetail = () => {
           teacher: obs.teacher,
           school: obs.school,
           grade: obs.grade,
-          project_name: obs.project_name,
+          project_name: obs.project_name || obs.subject,
+          problematica: obs.problematica || "",
+          producto_final: obs.producto_final || "",
         },
       });
 
@@ -102,7 +129,6 @@ const ObservacionDetail = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Header
     doc.setFontSize(20);
     doc.setTextColor(33, 150, 243);
     doc.text("Reporte de Observación Pedagógica", pageWidth / 2, 20, { align: "center" });
@@ -112,11 +138,10 @@ const ObservacionDetail = () => {
     doc.text(`Escuela: ${obs.school}`, 14, 35);
     doc.text(`Docente: ${obs.teacher}`, 14, 42);
     doc.text(`Fecha: ${format(new Date(obs.observation_date), "d 'de' MMMM yyyy", { locale: es })}`, 14, 49);
-    doc.text(`Grado: ${obs.grade} ${obs.group_name || ""} · Proyecto: ${obs.project_name}`, 14, 56);
+    doc.text(`Grado: ${obs.grade} ${obs.group_name || ""} · Proyecto: ${obs.project_name || obs.subject}`, 14, 56);
 
     let currentY = 70;
 
-    // Resumen
     doc.setFontSize(14);
     doc.setTextColor(0);
     doc.text("Resumen Pedagógico", 14, currentY);
@@ -126,7 +151,6 @@ const ObservacionDetail = () => {
     doc.text(summaryLines, 14, currentY);
     currentY += (summaryLines.length * 5) + 10;
 
-    // Indicadores Table
     doc.setFontSize(14);
     doc.text("Indicadores Evaluados", 14, currentY);
     currentY += 5;
@@ -143,13 +167,9 @@ const ObservacionDetail = () => {
 
     currentY = (doc as any).lastAutoTable.finalY + 15;
 
-    // Sections
     const addSection = (title: string, items: string[] | undefined, color: [number, number, number]) => {
       if (!items || items.length === 0) return;
-      if (currentY > 250) {
-        doc.addPage();
-        currentY = 20;
-      }
+      if (currentY > 250) { doc.addPage(); currentY = 20; }
       doc.setFontSize(14);
       doc.setTextColor(color[0], color[1], color[2]);
       doc.text(title, 14, currentY);
@@ -160,10 +180,7 @@ const ObservacionDetail = () => {
         const lines = doc.splitTextToSize(`• ${item}`, pageWidth - 28);
         doc.text(lines, 14, currentY);
         currentY += (lines.length * 5) + 2;
-        if (currentY > 280) {
-          doc.addPage();
-          currentY = 20;
-        }
+        if (currentY > 280) { doc.addPage(); currentY = 20; }
       });
       currentY += 5;
     };
@@ -174,10 +191,7 @@ const ObservacionDetail = () => {
     addSection("Recomendaciones", analysis.recommendations, [33, 150, 243]);
 
     if (analysis.implementation_level) {
-      if (currentY > 250) {
-        doc.addPage();
-        currentY = 20;
-      }
+      if (currentY > 250) { doc.addPage(); currentY = 20; }
       doc.setFontSize(14);
       doc.setTextColor(33, 150, 243);
       doc.text("Nivel de Implementación del Proyecto", 14, currentY);
@@ -213,23 +227,17 @@ const ObservacionDetail = () => {
 
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case "Evidencia clara":
-        return <CheckCircle className="w-4 h-4 text-emerald-600" />;
-      case "Evidencia parcial":
-        return <AlertCircle className="w-4 h-4 text-amber-600" />;
-      default:
-        return <MinusCircle className="w-4 h-4 text-slate-400" />;
+      case "Evidencia clara": return <CheckCircle className="w-4 h-4 text-emerald-600" />;
+      case "Evidencia parcial": return <AlertCircle className="w-4 h-4 text-amber-600" />;
+      default: return <MinusCircle className="w-4 h-4 text-slate-400" />;
     }
   };
 
   const getLevelClass = (level: string) => {
     switch (level) {
-      case "Evidencia clara":
-        return "evidence-clear";
-      case "Evidencia parcial":
-        return "evidence-partial";
-      default:
-        return "evidence-none";
+      case "Evidencia clara": return "evidence-clear";
+      case "Evidencia parcial": return "evidence-partial";
+      default: return "evidence-none";
     }
   };
 
@@ -243,7 +251,7 @@ const ObservacionDetail = () => {
           <div className="flex-1">
             <h1 className="text-lg font-display font-bold text-foreground truncate">{obs.school}</h1>
             <p className="text-xs md:text-sm text-muted-foreground truncate">
-              {obs.teacher} · {obs.grade} {obs.group_name} · {obs.project_name}
+              {obs.teacher} · {obs.grade} {obs.group_name} · {obs.project_name || obs.subject}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -253,6 +261,27 @@ const ObservacionDetail = () => {
                 Descargar PDF
               </Button>
             )}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar observación?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará permanentemente la observación de {obs.teacher} en {obs.school}, incluyendo el análisis generado.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {deleting ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <span
               className={`text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-full font-medium ${obs.status === "analyzed"
                 ? "bg-accent text-accent-foreground"
@@ -316,7 +345,6 @@ const ObservacionDetail = () => {
         {/* Analysis Results */}
         {analysis && (
           <div className="space-y-6 animate-fade-in pb-12">
-            {/* Implementation Level - NEW */}
             {analysis.implementation_level && (
               <Card className="p-6 border-l-4 border-l-primary bg-primary/5">
                 <h2 className="text-lg font-display font-bold text-foreground mb-3 flex items-center gap-2">
@@ -337,7 +365,6 @@ const ObservacionDetail = () => {
               </Card>
             )}
 
-            {/* Indicators Table */}
             <Card className="p-6">
               <h2 className="text-lg font-display font-bold text-foreground mb-4 flex items-center gap-2">
                 <Target className="w-5 h-5 text-primary" />
@@ -345,10 +372,7 @@ const ObservacionDetail = () => {
               </h2>
               <div className="grid gap-2">
                 {analysis.indicators?.map((ind, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${getLevelClass(ind.level)}`}
-                  >
+                  <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${getLevelClass(ind.level)}`}>
                     <div className="mt-0.5">{getLevelIcon(ind.level)}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
@@ -362,7 +386,6 @@ const ObservacionDetail = () => {
               </div>
             </Card>
 
-            {/* Evidences - NEW */}
             {analysis.observed_evidences && analysis.observed_evidences.length > 0 && (
               <Card className="p-6 bg-slate-50 border-dashed border-slate-300">
                 <h2 className="text-lg font-display font-bold text-foreground mb-3 flex items-center gap-2">
@@ -380,7 +403,6 @@ const ObservacionDetail = () => {
               </Card>
             )}
 
-            {/* Summary */}
             <Card className="p-6">
               <h2 className="text-lg font-display font-bold text-foreground mb-3 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
@@ -392,7 +414,6 @@ const ObservacionDetail = () => {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Strengths */}
               <Card className="p-6 bg-emerald-50/50 border-emerald-100">
                 <h2 className="text-lg font-display font-bold text-emerald-700 mb-3 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -408,7 +429,6 @@ const ObservacionDetail = () => {
                 </ul>
               </Card>
 
-              {/* Improvements */}
               <Card className="p-6 bg-amber-50/50 border-amber-100">
                 <h2 className="text-lg font-display font-bold text-amber-700 mb-3 flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-amber-600" />
@@ -425,7 +445,6 @@ const ObservacionDetail = () => {
               </Card>
             </div>
 
-            {/* Recommendations */}
             <Card className="p-6 border-primary/20 bg-primary/5">
               <h2 className="text-lg font-display font-bold text-foreground mb-3 flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-primary" />
