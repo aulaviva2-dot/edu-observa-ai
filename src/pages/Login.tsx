@@ -4,7 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { LogIn, Eye, EyeOff, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 const Login = () => {
@@ -13,9 +22,15 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!privacyAccepted) {
+      toast.error("Debes aceptar el Aviso de Privacidad para continuar.");
+      return;
+    }
     if (!email.endsWith("@jaliscoedu.mx")) {
       toast.error("Solo se permiten correos institucionales de la Secretaría de Educación Jalisco.");
       return;
@@ -79,7 +94,34 @@ const Login = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          {/* Privacy Notice */}
+          <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/30">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="privacy-login"
+                checked={privacyAccepted}
+                onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="privacy-login" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                He leído y acepto el{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacy(true)}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Aviso de Privacidad y Protección de Datos Personales
+                </button>
+                .
+              </label>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Shield className="w-3 h-3" />
+              Tus datos están protegidos conforme a la legislación vigente.
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading || !privacyAccepted}>
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </Button>
 
@@ -96,6 +138,79 @@ const Login = () => {
           </div>
         </form>
       </div>
+
+      {/* Privacy Dialog */}
+      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Aviso de Privacidad y Protección de Datos Personales
+            </DialogTitle>
+            <DialogDescription>
+              ObservaAula — Herramienta de Observación Pedagógica
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[55vh] pr-4">
+            <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">1. Responsable del tratamiento</h3>
+                <p>ObservaAula es una herramienta digital de uso educativo diseñada para directores escolares de la Secretaría de Educación Jalisco. El responsable del tratamiento de datos personales es el titular de la cuenta institucional que utiliza la plataforma.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">2. Datos personales recabados</h3>
+                <p>La plataforma recaba los siguientes datos:</p>
+                <ul className="list-disc pl-5 space-y-1 mt-1">
+                  <li>Nombre completo del usuario (director escolar).</li>
+                  <li>Correo electrónico institucional (@jaliscoedu.mx).</li>
+                  <li>Nombre de la escuela, docente observado, grado y grupo.</li>
+                  <li>Registros de observación pedagógica (vistazos).</li>
+                  <li>Resultados del análisis pedagógico generado por inteligencia artificial.</li>
+                </ul>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">3. Finalidad del tratamiento</h3>
+                <p>Los datos recabados se utilizan exclusivamente para:</p>
+                <ul className="list-disc pl-5 space-y-1 mt-1">
+                  <li>Facilitar la observación y retroalimentación pedagógica en el aula.</li>
+                  <li>Generar análisis pedagógicos mediante inteligencia artificial para uso formativo.</li>
+                  <li>Apoyar la mejora continua de la práctica docente.</li>
+                  <li>Generar reportes internos de acompañamiento pedagógico.</li>
+                </ul>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">4. Uso de inteligencia artificial</h3>
+                <p>Los registros de observación se procesan mediante modelos de inteligencia artificial para generar análisis pedagógicos automatizados. Los resultados son orientativos y no constituyen evaluaciones oficiales del desempeño docente. El análisis generado es de carácter formativo y confidencial.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">5. Protección y almacenamiento</h3>
+                <p>Los datos se almacenan en servidores seguros con cifrado en tránsito y en reposo. El acceso a la información está restringido únicamente al usuario que la generó, mediante autenticación con correo institucional verificado.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">6. Transferencia de datos</h3>
+                <p>Los datos personales no se comparten, venden ni transfieren a terceros. Los registros de observación se envían de forma segura a servicios de inteligencia artificial únicamente para su procesamiento, sin almacenar información personal identificable en dichos servicios.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">7. Derechos ARCO</h3>
+                <p>El usuario tiene derecho a Acceder, Rectificar, Cancelar u Oponerse al tratamiento de sus datos personales. Puede ejercer estos derechos eliminando sus observaciones desde la plataforma o solicitando la eliminación de su cuenta.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">8. Consentimiento</h3>
+                <p>Al iniciar sesión y aceptar este aviso, el usuario otorga su consentimiento informado para el tratamiento de sus datos personales conforme a lo descrito en este documento, en cumplimiento con la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados.</p>
+              </section>
+              <section>
+                <h3 className="font-semibold text-foreground mb-1">9. Modificaciones al aviso</h3>
+                <p>ObservaAula se reserva el derecho de modificar el presente aviso de privacidad. Cualquier cambio será notificado a los usuarios a través de la plataforma.</p>
+              </section>
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end pt-2">
+            <Button onClick={() => { setPrivacyAccepted(true); setShowPrivacy(false); }}>
+              Acepto el Aviso de Privacidad
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
