@@ -22,6 +22,9 @@ export type Database = {
           group_name: string
           id: string
           observation_date: string
+          problematica: string | null
+          producto_final: string | null
+          project_name: string
           school: string
           status: string
           subject: string
@@ -46,6 +49,9 @@ export type Database = {
           group_name: string
           id?: string
           observation_date?: string
+          problematica?: string | null
+          producto_final?: string | null
+          project_name?: string
           school: string
           status?: string
           subject: string
@@ -70,6 +76,9 @@ export type Database = {
           group_name?: string
           id?: string
           observation_date?: string
+          problematica?: string | null
+          producto_final?: string | null
+          project_name?: string
           school?: string
           status?: string
           subject?: string
