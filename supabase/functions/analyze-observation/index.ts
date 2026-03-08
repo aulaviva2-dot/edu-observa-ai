@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +12,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { vistazos, teacher, school, grade, project_name, problematica, producto_final } = await req.json();
+    const { observationId, vistazos, teacher, school, grade, project_name, problematica, producto_final } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -122,6 +123,39 @@ Analiza estos registros y genera el análisis pedagógico completo con los 19 in
     if (!jsonMatch) throw new Error("No valid JSON in AI response");
 
     const analysis = JSON.parse(jsonMatch[0]);
+
+    // Persist to database if observationId is provided
+    if (observationId) {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      // Clean existing suggestions for this observation
+      await supabaseAdmin
+        .from("pedagogical_suggestions")
+        .delete()
+        .eq("observation_id", observationId);
+
+      // Map indicators to the new table structure
+      const suggestionsToInsert = analysis.indicators.map((ind: any) => ({
+        observation_id: observationId,
+        indicator_name: ind.name,
+        level: ind.level,
+        detail: ind.detail,
+        suggestion: analysis.recommendations?.[0] || "" // Simplification for now, linking to main recommendation
+      }));
+
+      if (suggestionsToInsert.length > 0) {
+        await supabaseAdmin.from("pedagogical_suggestions").insert(suggestionsToInsert);
+      }
+
+      // Update observation status and ai_analysis field for legacy support
+      await supabaseAdmin
+        .from("observations")
+        .update({ ai_analysis: analysis, status: "analyzed" })
+        .eq("id", observationId);
+    }
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

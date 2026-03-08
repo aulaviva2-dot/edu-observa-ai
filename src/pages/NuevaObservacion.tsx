@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Send, Loader2, Eye } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Eye, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function NuevaObservacion() {
@@ -85,6 +85,7 @@ export default function NuevaObservacion() {
 
       const response = await supabase.functions.invoke("analyze-observation", {
         body: {
+          observationId: newObs.id,
           vistazos: validVistazos,
           school: info.school,
           teacher: info.teacher,
@@ -101,11 +102,6 @@ export default function NuevaObservacion() {
         navigate("/dashboard");
         return;
       }
-
-      await supabase
-        .from("observations")
-        .update({ ai_analysis: response.data, status: "analyzed" })
-        .eq("id", newObs.id);
 
       toast.success("¡Observación analizada correctamente!");
       navigate(`/observacion/${newObs.id}`);
@@ -176,20 +172,34 @@ export default function NuevaObservacion() {
             Registra brevemente lo que observas en cada vistazo de 5-10 segundos durante la clase.
           </p>
           <div className="space-y-3">
+          <div className="grid gap-4">
             {vistazos.map((v, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <span className="text-xs font-medium text-primary bg-accent rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-2">
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <Input
-                    placeholder={`Vistazo ${i + 1}: Describe brevemente lo observado`}
-                    value={v}
-                    onChange={(e) => handleVistazoChange(i, e.target.value)}
+              <div key={i} className="vistazo-card group">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-primary/60 uppercase tracking-tighter">
+                    Vistazo {i + 1}
+                  </span>
+                  {v.trim().length > 0 && (
+                    <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Registrado
+                    </span>
+                  )}
+                </div>
+                <Input
+                  placeholder="¿Qué sucede en el aula en este momento?"
+                  className="bg-transparent border-none p-0 focus-visible:ring-0 text-md placeholder:text-muted-foreground/50"
+                  value={v}
+                  onChange={(e) => handleVistazoChange(i, e.target.value)}
+                />
+                <div className="mt-2 h-1 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-300 ${v.trim().length > 10 ? 'bg-primary' : 'bg-amber-400'}`}
+                    style={{ width: `${Math.min(v.length * 2, 100)}%` }}
                   />
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </Card>
 

@@ -20,6 +20,14 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  ResponsiveContainer,
+} from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface AnalysisIndicator {
   name: string;
@@ -40,6 +48,16 @@ interface AnalysisData {
   };
 }
 
+interface PedagogicalSuggestion {
+  id: string;
+  observation_id: string;
+  indicator_name: string;
+  level: string;
+  detail: string;
+  suggestion: string;
+  created_at: string;
+}
+
 const ObservacionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -50,18 +68,40 @@ const ObservacionDetail = () => {
 
   useEffect(() => {
     const fetchObs = async () => {
-      const { data, error } = await supabase
+      const { data: observation, error: obsError } = await supabase
         .from("observations")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error || !data) {
+      if (obsError || !observation) {
         toast.error("Observación no encontrada");
         navigate("/dashboard");
         return;
       }
-      setObs(data);
+
+      const { data: suggestions } = await (supabase
+        .from("pedagogical_suggestions" as any) as any)
+        .select("*")
+        .eq("observation_id", id)
+        .order("created_at", { ascending: true });
+
+      let analysisData = observation.ai_analysis as unknown as AnalysisData;
+      if (suggestions && (suggestions as any[]).length > 0) {
+        const typedSuggestions = suggestions as unknown as PedagogicalSuggestion[];
+        analysisData = {
+          ...analysisData,
+          indicators: typedSuggestions.map(s => ({
+            name: s.indicator_name,
+            level: s.level as any,
+            detail: s.detail
+          })),
+          // Fallback to JSONB recommendations if suggestsions are empty
+          recommendations: (analysisData as any)?.recommendations?.length ? (analysisData as any).recommendations : typedSuggestions.map(s => s.suggestion).filter(Boolean)
+        };
+      }
+
+      setObs({ ...observation, ai_analysis: analysisData });
       setLoading(false);
     };
     fetchObs();
@@ -98,6 +138,7 @@ const ObservacionDetail = () => {
     try {
       const response = await supabase.functions.invoke("analyze-observation", {
         body: {
+          observationId: obs.id,
           vistazos,
           teacher: obs.teacher,
           school: obs.school,
@@ -109,11 +150,6 @@ const ObservacionDetail = () => {
       });
 
       if (response.error) throw response.error;
-
-      await supabase
-        .from("observations")
-        .update({ ai_analysis: response.data, status: "analyzed" })
-        .eq("id", obs.id);
 
       setObs({ ...obs, ai_analysis: response.data, status: "analyzed" });
       toast.success("¡Análisis completado!");
@@ -206,6 +242,39 @@ const ObservacionDetail = () => {
 
     doc.save(`Reporte_Observacion_${obs.teacher.replace(/\s+/g, "_")}.pdf`);
     toast.success("Reporte descargado correctamente");
+  };
+
+  const categories = [
+    { name: "Planeación", range: [0, 2] },
+    { name: "Metodologías", range: [3, 4] },
+    { name: "Evaluación", range: [5, 7] },
+    { name: "Interacción", range: [8, 11] },
+    { name: "Estrategias", range: [12, 14] },
+    { name: "Diversidad", range: [15, 15] },
+    { name: "Gestión", range: [16, 18] },
+  ];
+
+  const getScore = (level: string) => {
+    if (level === "Evidencia clara") return 3;
+    if (level === "Evidencia parcial") return 1.5;
+    return 0.5;
+  };
+
+  const chartData = categories.map((cat) => {
+    if (!obs?.ai_analysis?.indicators) return { category: cat.name, score: 0 };
+    const inds = obs.ai_analysis.indicators.slice(cat.range[0], cat.range[1] + 1);
+    const avg = inds.reduce((acc: number, curr: any) => acc + getScore(curr.level), 0) / inds.length;
+    return {
+      category: cat.name,
+      score: Math.round(avg * 33.3), // Normalize to 100
+    };
+  });
+
+  const chartConfig = {
+    score: {
+      label: "Desempeño %",
+      color: "hsl(var(--primary))",
+    },
   };
 
   if (loading) {
@@ -365,26 +434,57 @@ const ObservacionDetail = () => {
               </Card>
             )}
 
-            <Card className="p-6">
+            <Card className="p-6 overflow-hidden backdrop-blur-sm bg-white/80 border-white/20 shadow-xl">
               <h2 className="text-lg font-display font-bold text-foreground mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-primary" />
-                Indicadores Pedagógicos
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Balance del Desempeño
               </h2>
-              <div className="grid gap-2">
-                {analysis.indicators?.map((ind, i) => (
-                  <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${getLevelClass(ind.level)}`}>
-                    <div className="mt-0.5">{getLevelIcon(ind.level)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold">{ind.name}</p>
-                        <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 opacity-70">{ind.level}</span>
-                      </div>
-                      <p className="text-xs mt-1 opacity-80 leading-relaxed">{ind.detail}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="h-[300px] w-full">
+                <ChartContainer config={chartConfig}>
+                  <RadarChart data={chartData}>
+                    <PolarGrid stroke="hsl(var(--muted-foreground))" strokeOpacity={0.2} />
+                    <PolarAngleAxis dataKey="category" tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Radar
+                      name="Desempeño"
+                      dataKey="score"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.6}
+                    />
+                  </RadarChart>
+                </ChartContainer>
               </div>
             </Card>
+
+            <div className="space-y-4">
+              {categories.map((cat, idx) => {
+                const indicators = analysis.indicators?.slice(cat.range[0], cat.range[1] + 1);
+                if (!indicators || indicators.length === 0) return null;
+
+                return (
+                  <Card key={idx} className="p-6 transition-all hover:shadow-md border-l-4 border-l-primary/30">
+                    <h3 className="text-md font-bold text-primary mb-4 uppercase tracking-wider text-xs">
+                      {cat.name}
+                    </h3>
+                    <div className="grid gap-2">
+                      {indicators.map((ind, i) => (
+                        <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${getLevelClass(ind.level)}`}>
+                          <div className="mt-0.5">{getLevelIcon(ind.level)}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-semibold">{ind.name}</p>
+                              <span className="text-[10px] uppercase font-bold tracking-wider shrink-0 opacity-70">{ind.level}</span>
+                            </div>
+                            <p className="text-xs mt-1 opacity-80 leading-relaxed">{ind.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
 
             {analysis.observed_evidences && analysis.observed_evidences.length > 0 && (
               <Card className="p-6 bg-slate-50 border-dashed border-slate-300">
