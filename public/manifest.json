@@ -1,0 +1,15 @@
+{
+  "name": "ObservaAula",
+  "short_name": "ObservaAula",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#115e59",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
