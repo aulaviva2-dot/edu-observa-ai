@@ -86,7 +86,19 @@ const ObservacionDetail = () => {
         .eq("observation_id", id)
         .order("created_at", { ascending: true });
 
-      let analysisData = observation.ai_analysis as unknown as AnalysisData;
+      let analysisData = (observation.ai_analysis || {}) as unknown as AnalysisData;
+      
+      // Ensure basic structure if it was null or missing fields
+      analysisData = {
+        indicators: analysisData.indicators || [],
+        summary: analysisData.summary || "No hay un diagnóstico disponible aún.",
+        strengths: analysisData.strengths || [],
+        improvements: analysisData.improvements || [],
+        recommendations: analysisData.recommendations || [],
+        observed_evidences: analysisData.observed_evidences || [],
+        ...analysisData
+      };
+
       if (suggestions && (suggestions as any[]).length > 0) {
         const typedSuggestions = suggestions as unknown as PedagogicalSuggestion[];
         analysisData = {
@@ -96,8 +108,10 @@ const ObservacionDetail = () => {
             level: s.level as any,
             detail: s.detail
           })),
-          // Fallback to JSONB recommendations if suggestsions are empty
-          recommendations: (analysisData as any)?.recommendations?.length ? (analysisData as any).recommendations : typedSuggestions.map(s => s.suggestion).filter(Boolean)
+          // Ensure recommendations are merged or recovered from suggestions if missing in JSONB
+          recommendations: analysisData.recommendations.length > 0 
+            ? analysisData.recommendations 
+            : typedSuggestions.map(s => s.suggestion).filter(Boolean)
         };
       }
 
