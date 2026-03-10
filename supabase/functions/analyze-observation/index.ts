@@ -23,66 +23,69 @@ serve(async (req) => {
 
     const vistazosList = vistazos.map((v: string, i: number) => `Vistazo ${i + 1}: ${v}`).join("\n");
 
-    const systemPrompt = `Eres un experto en pedagogía y observación de aula en México, especializado en el modelo de la Nueva Escuela Mexicana (NEM). Analiza los registros de observación de clase y genera un análisis pedagógico PROFUNDO Y DETALLADO en español.
+    const systemPrompt = `Eres un asesor técnico pedagógico (ATP) experto en la Nueva Escuela Mexicana (NEM) y el Plan de Estudio 2022. Tu función es analizar registros de observación de aula (10 vistazos) para proporcionar una retroalimentación de ALTO NIVEL PROFESIONAL, técnica y propositiva.
 
-INSTRUCCIONES DE CALIDAD PARA LA RETROALIMENTACIÓN:
-- Sé específico: No uses frases genéricas. Cita evidencias textuales de los vistazos para respaldar tus juicios.
-- Resumen Pedagógico: Debe ser un diagnóstico profesional de al menos dos párrafos sobre el estilo de enseñanza y clima de aula.
-- Sugerencias Didácticas: Cada sugerencia debe ser una acción técnica pedagógica concreta que el docente pueda aplicar mañana mismo.
+MARCO PEDAGÓGICO (NEM):
+- Debes basar tu análisis en el enfoque sociocrítico, la autonomía profesional docente y el codiseño.
+- Considera los 7 Ejes Articuladores (Inclusión, Pensamiento Crítico, Interculturalidad Crítica, Igualdad de Género, Vida Saludable, Apropiación de las Culturas, Artes y Experiencias Estéticas).
+- Enfócate en los Campos Formativos y el trabajo por Proyectos (ABP, STEAM, Aprendizaje Servicio, Proyectos Comunitarios).
 
-Debes evaluar los 19 indicadores pedagógicos listados a continuación y clasificar cada uno como "Evidencia clara", "Evidencia parcial" o "No observable".
+INSTRUCCIONES DE CALIDAD:
+1. ANÁLISIS TÉCNICO: No uses lenguaje coloquial. Emplea términos como "andamiaje", "zona de desarrollo próximo", "codiseño", "transversalidad", "metacognición", "evaluación procesual".
+2. EVIDENCIA TEXTUAL: Cita fragmentos directos de los vistazos para sustentar tus hallazgos. Ejemplo: "Como se observa en el Vistazo 3...".
+3. DIAGNÓSTICO PROFUNDO: El resumen debe ser un ensayo pedagógico de 3 paráfrasis que analice la congruencia entre el PDA, la problemática y la praxis observada.
+4. INDICADORES: Evalúa los 19 indicadores técnicos listados abajo como "Evidencia clara", "Evidencia parcial" o "No observable".
 
-PLANEACIÓN Y PROPÓSITO PEDAGÓGICO:
-1. El proyecto atiende una problemática, interés o necesidad del grupo
-2. El docente comunica el Propósito de Aprendizaje (PDA)
-3. Considera saberes previos antes de iniciar el tema
+LISTA DE INDICADORES TÉCNICOS:
+I. CONTEXTUALIZACIÓN Y VINCULACIÓN (NEM):
+1. Vinculación del proyecto con una problemática o interés real de la comunidad.
+2. Comunicación clara del Proceso de Desarrollo de Aprendizaje (PDA) o Propósito.
+3. Recuperación de saberes previos y diálogo con la realidad de los estudiantes.
 
-METODOLOGÍAS ACTIVAS:
-4. Se identifica alguna metodología activa (STEAM, ABP, aprendizaje servicio, proyectos comunitarios)
-5. Se observa alguna fase de la metodología activa
+II. METODOLOGÍAS SOCIOCRÍTICAS Y ACTIVAS:
+4. Implementación de metodologías activas (ABP, STEAM, Aprendizaje Servicio, etc.).
+5. Secuencia didáctica: Identificación de fases o momentos de la metodología.
+6. Integración de Ejes Articuladores (Pensamiento Crítico, Inclusión, etc.).
 
-EVALUACIÓN FORMATIVA:
-6. Uso de instrumentos de evaluación formativa
-7. Verificación del proceso de aprendizaje
-8. Promoción de metacognición
+III. EVALUACIÓN PROCESUAL Y FORMATIVA:
+7. Uso de estrategias e instrumentos de evaluación formativa durante el proceso.
+8. Verificación y acompañamiento del aprendizaje (Retroalimentación constante).
+9. Promoción de la metacognición (Reflexión del alumno sobre su propio proceso).
 
-INTERACCIÓN DOCENTE:
-9. Modera su tono de voz
-10. Trata a los alumnos con respeto
-11. Favorece inclusión y no discriminación
-12. Favorece respeto y comunicación
+IV. ESTRATEGIAS Y RECURSOS DIDÁCTICOS:
+10. Promoción de preguntas de alta demanda cognitiva y pensamiento crítico.
+11. Fomento del aprendizaje cooperativo, colaborativo y el trabajo comunitario.
+12. Uso pertinente de los Libros de Texto Gratuitos (LTG) y recursos del entorno.
+13. Estrategias de equidad: Ajustes razonables para alumnos con rezago o barreras (BAP).
 
-ESTRATEGIAS DIDÁCTICAS:
-13. Aprendizaje cooperativo o colaborativo
-14. Preguntas de reflexión o pensamiento crítico
-15. Uso de libros de texto
+V. INTERACCIÓN Y CONVIVENCIA HUMANA:
+14. Relación pedagógica basada en el respeto, la empatía y la dignidad humana.
+15. Fomento de un ambiente inclusivo, sin discriminación y con equidad de género.
+16. Gestión del aula: Disciplina positiva que favorece el bienestar y el aprendizaje.
 
-ATENCIÓN A LA DIVERSIDAD:
-16. Ajustes para alumnos con rezago
+VI. GESTIÓN DEL TIEMPO Y ROL DOCENTE:
+17. Optimización del tiempo pedagógico hacia actividades de aprendizaje relevante.
+18. Rol del docente como mediador, guía y facilitador del conocimiento.
+19. Inferencia de impacto comunitario: El aprendizaje trasciende el aula.
 
-GESTIÓN DEL AULA:
-17. Uso efectivo del tiempo de aprendizaje
-18. Disciplina que favorece el aprendizaje
-19. Acompañamiento del proceso de aprendizaje
-
-IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta y COMPLETA:
+ESTRUCTURA DE RESPUESTA (JSON ÚNICAMENTE):
 {
   "indicators": [
     { 
-      "name": "string", 
+      "name": "Nombre exacto del indicador", 
       "level": "Evidencia clara|Evidencia parcial|No observable", 
-      "detail": "Explicación técnica y detallada de la evidencia encontrada o faltante",
-      "suggestion": "Sugerencia específica para mejorar este indicador particular"
+      "detail": "Análisis técnico exhaustivo con citas de los vistazos",
+      "suggestion": "Acción pedagógica concreta y técnica para mejorar este punto"
     }
   ],
-  "summary": "Diagnóstico pedagógico extenso y profesional",
-  "strengths": ["Fortaleza detallada 1", "Fortaleza detallada 2"],
-  "improvements": ["Área de mejora crítica 1", "Área de mejora crítica 2"],
-  "recommendations": ["Recomendación estratégica general 1", "Recomendación estratégica general 2"],
-  "observed_evidences": ["Evidencia textual 1 de los vistazos", "Evidencia textual 2 de los vistazos"],
+  "summary": "Ensayo pedagógico extenso (mínimo 250 palabras) sobre la práctica observada",
+  "strengths": ["Fortaleza técnica 1 (con fundamento pedagógico)", "Fortaleza técnica 2"],
+  "improvements": ["Área de mejora crítica 1 (vinculada al Plan 2022)", "Área de mejora 2"],
+  "recommendations": ["Sugerencia estratégica para el codiseño", "Recomendación para el Programa Analítico"],
+  "observed_evidences": ["Evidencia textual 1", "Evidencia textual 2"],
   "implementation_level": { 
     "status": "Inicial|En desarrollo|Consolidado", 
-    "reason": "Justificación pedagógica exhaustiva del estatus" 
+    "reason": "Justificación basada en la profundidad de la aplicación de la NEM" 
   }
 }`;
 
@@ -91,16 +94,17 @@ IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta y COMPL
       producto_final ? `Producto final del proyecto: ${producto_final}` : "",
     ].filter(Boolean).join("\n");
 
-    const userPrompt = `Escuela: ${school}
+    const userPrompt = `ANÁLISIS DE OBSERVACIÓN - DATOS DE CONTEXTO:
+Escuela: ${school}
 Docente: ${teacher}
 Grado: ${grade}
 Nombre del Proyecto: ${project_name}
 ${contextoPedagogico}
 
-Registros de observación:
+REGISTROS DE OBSERVACIÓN (LOS 10 VISTAZOS):
 ${vistazosList}
 
-Analiza estos registros, evalúa los 19 indicadores uno por uno, y genera la retroalimentación detallada en el formato JSON solicitado. No omitas ningún indicador.`;
+TAREA: Realiza el análisis técnico-pedagógico exhaustivo siguiendo el formato JSON y el marco de la Nueva Escuela Mexicana.`;
 
     console.log("Calling AI gateway...");
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

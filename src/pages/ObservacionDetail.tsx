@@ -245,13 +245,12 @@ const ObservacionDetail = () => {
   };
 
   const categories = [
-    { name: "Planeación", range: [0, 2] },
-    { name: "Metodologías", range: [3, 4] },
-    { name: "Evaluación", range: [5, 7] },
-    { name: "Interacción", range: [8, 11] },
-    { name: "Estrategias", range: [12, 14] },
-    { name: "Diversidad", range: [15, 15] },
-    { name: "Gestión", range: [16, 18] },
+    { name: "Contexto/NEM", range: [0, 2] },
+    { name: "Metodologías", range: [3, 5] },
+    { name: "Eval. Formativa", range: [6, 8] },
+    { name: "Estrategias", range: [9, 12] },
+    { name: "Convivencia", range: [13, 15] },
+    { name: "Gestión/Rol", range: [16, 18] },
   ];
 
   const getScore = (level: string) => {
@@ -504,10 +503,13 @@ const ObservacionDetail = () => {
             )}
 
             <Card className="p-6">
-              <h2 className="text-lg font-display font-bold text-foreground mb-3 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary" />
-                Diagnóstico del Estilo de Enseñanza
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  Diagnóstico del Estilo de Enseñanza
+                </h2>
+                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Enfoque NEM</span>
+              </div>
               <p className="text-sm text-muted-foreground leading-relaxed bg-accent/30 p-4 rounded-lg border border-accent">
                 {analysis.summary}
               </p>
